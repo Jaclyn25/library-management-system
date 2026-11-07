@@ -15,8 +15,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddDbContext<LibraryDb>((services, options) => options.UseNpgsql(
-    services.GetRequiredService<IConfiguration>().GetConnectionString("Library")
-    ?? throw new InvalidOperationException("Configure ConnectionStrings__Library before using the database.")));
+    DatabaseConfiguration.Resolve(services.GetRequiredService<IConfiguration>())));
 builder.Services.AddScoped<CatalogService>();
 builder.Services.AddScoped<BorrowerService>();
 builder.Services.AddSingleton(TimeProvider.System);
