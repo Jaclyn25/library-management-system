@@ -203,6 +203,8 @@ Implementation was delivered through separate feature pull requests into `main`,
 
 GitHub Actions runs .NET build and PostgreSQL-backed tests, TypeScript checking, frontend build, lint, frontend tests and real Chromium flows. Failure artifacts retain browser reports, screenshots, traces and API logs. There is no deployment job. The repository's GitGuardian integration also scans each PR.
 
+CI uses Ubuntu 24.04 and explicitly pinned releases of GitHub's checkout, setup and artifact actions that support the Node 24 action runtime.
+
 The [delivery record](submission/DELIVERY.md) lists branches and pull requests.
 
 ## Known limitations
