@@ -10,5 +10,6 @@ try {
     $env:ConnectionStrings__Library = "Host=localhost;Port=54329;Database=$($settings.POSTGRES_DB);Username=$($settings.POSTGRES_USER);Password=$($settings.POSTGRES_PASSWORD)"
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:Database__Migrate = 'true'
+    $env:Database__Seed = 'true'
     dotnet run --project backend/Library.Api --no-launch-profile --urls http://localhost:5080
 } finally { Pop-Location }
