@@ -17,6 +17,7 @@ All implementation branches start from updated `main`. Pull requests were review
 | `chore/container-runtime` | [#9](https://github.com/Jaclyn25/library-management-system/pull/9) | Full-stack Compose, runtime configuration and container CI |
 | `fix/configurable-web-port` | [#10](https://github.com/Jaclyn25/library-management-system/pull/10) | Configurable loopback port for Windows reserved ports |
 | `docs/project-documentation` | [#11](https://github.com/Jaclyn25/library-management-system/pull/11) | README, actual screenshots, test evidence and submission package |
+| `chore/update-ci-actions` | [#12](https://github.com/Jaclyn25/library-management-system/pull/12) | Supported Node 24 GitHub Actions releases and stable Ubuntu runner |
 
 The existing remote was empty. An empty baseline commit created `main` so the foundation could use a pull request. A false-positive secret finding on a Compose interpolation expression was removed by consolidating the unmerged foundation branch, then validated by GitGuardian. Only that feature branch was updated with force-with-lease. `main` was never force-pushed.
 
