@@ -21,12 +21,15 @@ builder.Services.AddScoped<CatalogService>();
 builder.Services.AddScoped<BorrowerService>();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<CirculationService>();
+builder.Services.AddScoped<ReportService>();
 
 var app = builder.Build();
 app.UseExceptionHandler();
 if (app.Configuration.GetValue<bool>("Database:Migrate")) {
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<LibraryDb>().Database.MigrateAsync();
+    if (app.Configuration.GetValue<bool>("Database:Seed"))
+        await SeedData.Initialize(scope.ServiceProvider.GetRequiredService<LibraryDb>());
 }
 
 // Configure the HTTP request pipeline.
