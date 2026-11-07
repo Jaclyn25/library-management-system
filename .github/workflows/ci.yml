@@ -7,6 +7,34 @@ on:
 permissions:
   contents: read
 jobs:
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate ephemeral database configuration
+        shell: python
+        run: |
+          import secrets
+          from pathlib import Path
+          values = ['POSTGRES_DB=library', 'POSTGRES_USER=library', 'POSTGRES_PASSWORD=' + secrets.token_hex(24)]
+          Path('.env').write_text('\n'.join(values) + '\n')
+      - run: docker compose up --build --detach --wait --wait-timeout 120
+      - name: Check web, database API and OpenAPI through reverse proxy
+        shell: python
+        run: |
+          import json
+          from urllib.request import urlopen
+          base = 'http://localhost:8080'
+          assert 'Folio' in urlopen(base).read().decode()
+          report = json.load(urlopen(base + '/api/reports'))
+          assert report['totalBooks'] == 87
+          assert report['availableBooks'] + report['borrowedBooks'] == report['totalBooks']
+          assert json.load(urlopen(base + '/openapi/v1.json'))['openapi'].startswith('3.')
+      - run: docker compose logs --tail 100
+        if: failure()
+      - run: docker compose down
+        if: always()
   backend:
     runs-on: ubuntu-latest
     services:
