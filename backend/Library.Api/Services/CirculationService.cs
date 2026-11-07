@@ -49,4 +49,21 @@ public class CirculationService(LibraryDb db, TimeProvider clock, ILogger<Circul
         logger.LogInformation("Issued loan {LoanId} for book {BookId}", loan.Id, loan.BookId);
         return await Get(loan.Id);
     }
+
+    public async Task<LoanView> Return(int id)
+    {
+        var now = clock.GetUtcNow().UtcDateTime;
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var bookId = await db.Loans.Where(x => x.Id == id).Select(x => (int?)x.BookId).SingleOrDefaultAsync()
+            ?? throw new BusinessException(404, "Loan not found.");
+        var changed = await db.Loans.Where(x => x.Id == id && x.ReturnedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.ReturnedAt, now));
+        if (changed == 0) throw new BusinessException(409, "This loan has already been returned.");
+        var restored = await db.Books.Where(x => x.Id == bookId && x.AvailableCopies < x.TotalCopies)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.AvailableCopies, x => x.AvailableCopies + 1));
+        if (restored == 0) throw new BusinessException(409, "Stock could not be restored. No return was recorded.");
+        await transaction.CommitAsync();
+        logger.LogInformation("Returned loan {LoanId} for book {BookId}", id, bookId);
+        return await Get(id);
+    }
 }
