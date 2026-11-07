@@ -22,13 +22,29 @@ public class Category
     public string Name { get; set; } = "";
 }
 
+public class Borrower
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;
+}
+
 public class LibraryDb(DbContextOptions<LibraryDb> options) : DbContext(options)
 {
     public DbSet<Book> Books => Set<Book>();
     public DbSet<Category> Categories => Set<Category>();
+    public DbSet<Borrower> Borrowers => Set<Borrower>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.Entity<Borrower>(e => {
+            e.Property(x => x.Name).HasMaxLength(160);
+            e.Property(x => x.Email).HasMaxLength(254);
+            e.Property(x => x.Phone).HasMaxLength(30);
+            e.HasIndex(x => x.Email).IsUnique();
+        });
         model.Entity<Category>(e => {
             e.Property(x => x.Name).HasMaxLength(80);
             e.HasIndex(x => x.Name).IsUnique();
