@@ -9,6 +9,20 @@ permissions:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: library
+          POSTGRES_USER: library
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U library"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      LIBRARY_TEST_CONNECTION: Host=localhost;Port=5432;Database=library;Username=library
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

@@ -1,3 +1,8 @@
+using Library.Api.Data;
+using Library.Api.Infrastructure;
+using Library.Api.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddJsonConsole();
@@ -7,8 +12,19 @@ builder.Logging.AddJsonConsole();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddDbContext<LibraryDb>((services, options) => options.UseNpgsql(
+    services.GetRequiredService<IConfiguration>().GetConnectionString("Library")
+    ?? throw new InvalidOperationException("Configure ConnectionStrings__Library before using the database.")));
+builder.Services.AddScoped<CatalogService>();
 
 var app = builder.Build();
+app.UseExceptionHandler();
+if (app.Configuration.GetValue<bool>("Database:Migrate")) {
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<LibraryDb>().Database.MigrateAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
