@@ -18,6 +18,7 @@ builder.Services.AddDbContext<LibraryDb>((services, options) => options.UseNpgsq
     services.GetRequiredService<IConfiguration>().GetConnectionString("Library")
     ?? throw new InvalidOperationException("Configure ConnectionStrings__Library before using the database.")));
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<BorrowerService>();
 
 var app = builder.Build();
 app.UseExceptionHandler();
