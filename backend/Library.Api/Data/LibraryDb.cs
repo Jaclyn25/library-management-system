@@ -31,14 +31,39 @@ public class Borrower
     public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;
 }
 
+public class Loan
+{
+    public int Id { get; set; }
+    public int BookId { get; set; }
+    public Book Book { get; set; } = null!;
+    public int BorrowerId { get; set; }
+    public Borrower Borrower { get; set; } = null!;
+    public DateTime IssuedAt { get; set; }
+    public DateTime DueAt { get; set; }
+    public DateTime? ReturnedAt { get; set; }
+    public Guid OperationId { get; set; }
+}
+
 public class LibraryDb(DbContextOptions<LibraryDb> options) : DbContext(options)
 {
     public DbSet<Book> Books => Set<Book>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Borrower> Borrowers => Set<Borrower>();
+    public DbSet<Loan> Loans => Set<Loan>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.Entity<Loan>(e => {
+            e.HasOne(x => x.Book).WithMany().OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Borrower).WithMany().OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => x.OperationId).IsUnique();
+            e.HasIndex(x => new { x.BookId, x.BorrowerId }).IsUnique().HasFilter("\"ReturnedAt\" IS NULL");
+            e.HasIndex(x => x.DueAt);
+            e.ToTable(t => {
+                t.HasCheckConstraint("CK_Loan_Due", "\"DueAt\" > \"IssuedAt\"");
+                t.HasCheckConstraint("CK_Loan_Return", "\"ReturnedAt\" IS NULL OR \"ReturnedAt\" >= \"IssuedAt\"");
+            });
+        });
         model.Entity<Borrower>(e => {
             e.Property(x => x.Name).HasMaxLength(160);
             e.Property(x => x.Email).HasMaxLength(254);

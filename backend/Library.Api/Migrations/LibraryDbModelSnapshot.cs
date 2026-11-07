@@ -130,6 +130,53 @@ namespace Library.Api.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("Library.Api.Data.Loan", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BorrowerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReturnedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BorrowerId");
+
+                    b.HasIndex("DueAt");
+
+                    b.HasIndex("OperationId")
+                        .IsUnique();
+
+                    b.HasIndex("BookId", "BorrowerId")
+                        .IsUnique()
+                        .HasFilter("\"ReturnedAt\" IS NULL");
+
+                    b.ToTable("Loans", t =>
+                        {
+                            t.HasCheckConstraint("CK_Loan_Due", "\"DueAt\" > \"IssuedAt\"");
+
+                            t.HasCheckConstraint("CK_Loan_Return", "\"ReturnedAt\" IS NULL OR \"ReturnedAt\" >= \"IssuedAt\"");
+                        });
+                });
+
             modelBuilder.Entity("Library.Api.Data.Book", b =>
                 {
                     b.HasOne("Library.Api.Data.Category", "Category")
@@ -139,6 +186,25 @@ namespace Library.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Library.Api.Data.Loan", b =>
+                {
+                    b.HasOne("Library.Api.Data.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Library.Api.Data.Borrower", "Borrower")
+                        .WithMany()
+                        .HasForeignKey("BorrowerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("Borrower");
                 });
 #pragma warning restore 612, 618
         }
