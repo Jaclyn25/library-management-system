@@ -48,3 +48,58 @@ jobs:
       - run: npm run build
       - run: npm run lint
       - run: npm test
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: library_e2e
+          POSTGRES_USER: library
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U library -d library_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ConnectionStrings__Library: Host=localhost;Port=5432;Database=library_e2e;Username=library
+      Database__Migrate: 'true'
+      Database__Seed: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: dotnet build --configuration Release
+      - name: Start API and wait for readiness
+        shell: bash
+        run: |
+          dotnet run --project backend/Library.Api --configuration Release --no-build --no-launch-profile --urls http://127.0.0.1:5080 > api.log 2>&1 &
+          for attempt in {1..45}; do
+            if curl --fail --silent http://127.0.0.1:5080/api/reports > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat api.log
+          exit 1
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failure-evidence
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            api.log
+          retention-days: 7
