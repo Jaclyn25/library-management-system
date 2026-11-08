@@ -11,12 +11,16 @@ import {
   Menu,
   X,
   ArrowUpRight,
+  CheckCircle2,
+  FileQuestion,
+  Home,
 } from "lucide-react";
 import { Catalog } from "./Catalog";
 import { Borrowers } from "./Borrowers";
 import { Categories } from "./Categories";
 import { Loans, IssueBook } from "./Loans";
 import { Loading } from "./components";
+
 const Dashboard = lazy(() =>
   import("./Dashboard").then((module) => ({ default: module.Dashboard })),
 );
@@ -29,16 +33,27 @@ const navigation = [
   { path: "/categories", label: "Categories", icon: Tags },
   { path: "/reports", label: "Reports", icon: ChartNoAxesCombined },
 ];
+
 export function App() {
   const [notice, setNotice] = useState(""),
     [open, setOpen] = useState(false),
     location = useLocation();
+
   useEffect(() => {
     if (notice) {
       const timer = setTimeout(() => setNotice(""), 6000);
       return () => clearTimeout(timer);
     }
   }, [notice]);
+
+  const currentNav = navigation.find(
+    (n) => n.path !== "/" && location.pathname.startsWith(n.path),
+  );
+  const isCustomSubroute =
+    location.pathname === "/loans/new"
+      ? "Issue a book"
+      : currentNav?.label ?? "Overview";
+
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main">
@@ -47,7 +62,7 @@ export function App() {
       <aside className={`sidebar ${open ? "open" : ""}`}>
         <Link to="/" className="brand" onClick={() => setOpen(false)}>
           <span>
-            <BookOpen size={25} />
+            <BookOpen size={24} />
           </span>
           folio<span className="brand-period">.</span>
         </Link>
@@ -60,7 +75,7 @@ export function App() {
               end={n.path === "/"}
               onClick={() => setOpen(false)}
             >
-              <n.icon size={19} />
+              <n.icon size={18} />
               {n.label}
             </NavLink>
           ))}
@@ -73,7 +88,7 @@ export function App() {
             Thoughtfully managed.
           </p>
           <Link to="/books" onClick={() => setOpen(false)}>
-            Browse the collection <ArrowUpRight size={15} />
+            Browse the collection <ArrowUpRight size={14} />
           </Link>
         </div>
         <div className="staff-profile">
@@ -84,6 +99,7 @@ export function App() {
           </div>
         </div>
       </aside>
+
       {open && (
         <button
           className="nav-backdrop"
@@ -91,6 +107,7 @@ export function App() {
           onClick={() => setOpen(false)}
         />
       )}
+
       <div className="workspace">
         <header className="topbar">
           <div>
@@ -100,15 +117,11 @@ export function App() {
               aria-expanded={open}
               onClick={() => setOpen(!open)}
             >
-              {open ? <X /> : <Menu />}
+              {open ? <X size={20} /> : <Menu size={20} />}
             </button>
             <span>Workspace</span>
             <span className="breadcrumb-separator">/</span>
-            <strong>
-              {navigation.find(
-                (n) => n.path !== "/" && location.pathname.startsWith(n.path),
-              )?.label ?? "Overview"}
-            </strong>
+            <strong>{isCustomSubroute}</strong>
           </div>
           <div className="today">
             <span className="status-dot" />
@@ -122,6 +135,7 @@ export function App() {
             </span>
           </div>
         </header>
+
         <main id="main" tabIndex={-1}>
           <Suspense fallback={<Loading />}>
             <Routes>
@@ -144,29 +158,43 @@ export function App() {
               <Route
                 path="*"
                 element={
-                  <>
+                  <div className="not-found-container surface">
+                    <span className="not-found-badge">
+                      <FileQuestion size={48} strokeWidth={1.5} />
+                    </span>
                     <h1>Page not found</h1>
-                    <Link to="/">Return to overview</Link>
-                  </>
+                    <p>
+                      This page seems to have wandered off the shelf or doesn't
+                      exist in the library catalog.
+                    </p>
+                    <Link to="/" className="button">
+                      <Home size={16} />
+                      Return to overview
+                    </Link>
+                  </div>
                 }
               />
             </Routes>
           </Suspense>
         </main>
+
         <footer className="workspace-footer">
           <span>Folio · Library Management System</span>
           <span>Auspify Technologies · Task 2</span>
         </footer>
       </div>
+
       {notice && (
         <div role="status" className="toast">
-          {notice}
+          <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
+          <span>{notice}</span>
           <button
             className="icon-button"
             aria-label="Dismiss notification"
+            title="Dismiss"
             onClick={() => setNotice("")}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       )}
